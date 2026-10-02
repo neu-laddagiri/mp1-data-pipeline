@@ -13,3 +13,6 @@ Thumbs.db
 
 venv/
 __pycache__/
+
+cleaned_data.csv
+cleaned_messy.csv
