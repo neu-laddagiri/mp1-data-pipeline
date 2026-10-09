@@ -16,3 +16,5 @@ __pycache__/
 
 cleaned_data.csv
 cleaned_messy.csv
+
+output/
