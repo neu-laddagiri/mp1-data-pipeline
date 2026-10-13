@@ -43,6 +43,12 @@ def remove_outliers(df, columns, method, threshold):
         logger.error(f"Unsupported outlier method: {method}")
         raise ValueError(f"Unsupported outlier method: {method}")
 
+    try:
+        threshold = float(threshold)
+    except (TypeError, ValueError) as error:
+        logger.error(f"Invalid outlier threshold: {threshold!r}")
+        raise ValueError(f"Invalid outlier threshold: {threshold!r}") from error
+
     for column in columns:
         if column not in df.columns:
             logger.warning(f"Column not found: {column}")
@@ -78,20 +84,20 @@ def remove_outliers(df, columns, method, threshold):
 
 def process_data(df, config):
     """Apply the processing steps enabled in the configuration."""
-    settings = config.get("processing", {})
+    settings = config.get("processing") or {}
 
     if settings.get("remove_duplicates", False):
         df = remove_duplicates(df)
 
-    missing = settings.get("missing", {})
+    missing = settings.get("missing") or {}
     if missing.get("enabled", False):
         df = handle_missing(df, missing.get("axis", "rows"))
 
-    outliers = settings.get("outliers", {})
+    outliers = settings.get("outliers") or {}
     if outliers.get("enabled", False):
         df = remove_outliers(
             df,
-            outliers.get("columns", []),
+            outliers.get("columns") or [],
             outliers.get("method"),
             outliers.get("threshold"),
         )

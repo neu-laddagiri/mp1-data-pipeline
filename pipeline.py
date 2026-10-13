@@ -66,9 +66,13 @@ def main():
     except ValueError:
         sys.exit(1)
 
-    validation = config.get("validation", {})
-    required_columns = validation.get("required_columns", [])
-    numeric_columns = validation.get("numeric_columns", [])
+    if not isinstance(config, dict):
+        logger.error(f"Config file must contain YAML settings: {args.config}")
+        sys.exit(1)
+
+    validation = config.get("validation") or {}
+    required_columns = validation.get("required_columns") or []
+    numeric_columns = validation.get("numeric_columns") or []
 
     rows_before_validation = len(df)
 
