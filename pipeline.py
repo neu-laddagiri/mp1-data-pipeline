@@ -61,7 +61,7 @@ def main():
         sys.exit(1)
 
     try:
-        df = load_data(args.input)
+        data = load_data(args.input)
         config = load_data(args.config)
     except ValueError:
         sys.exit(1)
@@ -78,30 +78,30 @@ def main():
     required_columns = validation.get("required_columns") or []
     numeric_columns = validation.get("numeric_columns") or []
 
-    rows_before_validation = len(df)
+    rows_before_validation = len(data)
 
     try:
-        df = validate_dataframe(df, required_columns, numeric_columns)
+        data = validate_dataframe(data, required_columns, numeric_columns)
     except ValueError:
         sys.exit(1)
 
-    logger.info(f"Validation complete: {rows_before_validation} → {len(df)} rows")
+    logger.info(f"Validation complete: {rows_before_validation} → {len(data)} rows")
 
-    df_original = df.copy()
+    original_data = data.copy()
 
     try:
-        df = process_data(df, config)
+        data = process_data(data, config)
     except ValueError:
         sys.exit(1)
 
-    report = create_cleaning_report(df_original, df)
+    report = create_cleaning_report(original_data, data)
 
     logger.info(
         f"Processing complete: {report['rows_before']} → {report['rows_after']} rows"
     )
 
     try:
-        output_path = save_data(df, args.output)
+        output_path = save_data(data, args.output)
     except ValueError:
         sys.exit(1)
 

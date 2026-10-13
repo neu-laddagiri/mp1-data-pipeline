@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 def _as_list(value):
-    """Return a config value as a list (None -> [], "rating" -> ["rating"])."""
+    """Return a config value as a list: None becomes [] and a single name becomes [name]."""
     if value is None:
         return []
     if isinstance(value, (list, tuple)):
