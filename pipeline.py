@@ -71,6 +71,10 @@ def main():
         sys.exit(1)
 
     validation = config.get("validation") or {}
+    if not isinstance(validation, dict):
+        logger.error(f"Config section 'validation' must contain settings, got {validation!r}")
+        sys.exit(1)
+
     required_columns = validation.get("required_columns") or []
     numeric_columns = validation.get("numeric_columns") or []
 
@@ -96,7 +100,11 @@ def main():
         f"Processing complete: {report['rows_before']} → {report['rows_after']} rows"
     )
 
-    output_path = save_data(df, args.output)
+    try:
+        output_path = save_data(df, args.output)
+    except ValueError:
+        sys.exit(1)
+
     logger.info(f"Saved cleaned data to {output_path}")
 
     print("\nCleaning report:")

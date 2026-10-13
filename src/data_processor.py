@@ -49,6 +49,15 @@ def remove_outliers(df, columns, method, threshold):
         logger.error(f"Invalid outlier threshold: {threshold!r}")
         raise ValueError(f"Invalid outlier threshold: {threshold!r}") from error
 
+    if threshold < 0:
+        logger.error(f"Outlier threshold cannot be negative: {threshold}")
+        raise ValueError(f"Outlier threshold cannot be negative: {threshold}")
+
+    if columns is None:
+        columns = []
+    elif not isinstance(columns, (list, tuple)):
+        columns = [columns]
+
     for column in columns:
         if column not in df.columns:
             logger.warning(f"Column not found: {column}")
@@ -70,6 +79,10 @@ def remove_outliers(df, columns, method, threshold):
             lower = mean - threshold * std
             upper = mean + threshold * std
 
+        if pd.isna(lower) or pd.isna(upper):
+            logger.warning(f"Not enough data to compute outlier bounds for {column}")
+            continue
+
         before = len(df)
         df = df[(df[column] >= lower) & (df[column] <= upper)].copy()
         removed = before - len(df)
@@ -82,22 +95,45 @@ def remove_outliers(df, columns, method, threshold):
     return df
 
 
+def _get_section(settings, name):
+    """Return a config section as a dict ({} if it is missing or empty)."""
+    section = settings.get(name)
+    if section is None:
+        return {}
+    if not isinstance(section, dict):
+        logger.error(f"Config section '{name}' must contain settings, got {section!r}")
+        raise ValueError(f"Config section '{name}' must contain settings, got {section!r}")
+    return section
+
+
+def _is_enabled(value, name):
+    """Read a true/false setting (also accepts the strings "true" and "false")."""
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+        return value.strip().lower() == "true"
+    logger.error(f"{name} must be true or false, got {value!r}")
+    raise ValueError(f"{name} must be true or false, got {value!r}")
+
+
 def process_data(df, config):
     """Apply the processing steps enabled in the configuration."""
-    settings = config.get("processing") or {}
+    settings = _get_section(config, "processing")
 
-    if settings.get("remove_duplicates", False):
+    if _is_enabled(settings.get("remove_duplicates"), "remove_duplicates"):
         df = remove_duplicates(df)
 
-    missing = settings.get("missing") or {}
-    if missing.get("enabled", False):
-        df = handle_missing(df, missing.get("axis", "rows"))
+    missing = _get_section(settings, "missing")
+    if _is_enabled(missing.get("enabled"), "missing.enabled"):
+        df = handle_missing(df, missing.get("axis") or "rows")
 
-    outliers = settings.get("outliers") or {}
-    if outliers.get("enabled", False):
+    outliers = _get_section(settings, "outliers")
+    if _is_enabled(outliers.get("enabled"), "outliers.enabled"):
         df = remove_outliers(
             df,
-            outliers.get("columns") or [],
+            outliers.get("columns"),
             outliers.get("method"),
             outliers.get("threshold"),
         )

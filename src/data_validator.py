@@ -6,6 +6,15 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
+def _as_list(value):
+    """Return a config value as a list (None -> [], "rating" -> ["rating"])."""
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]
+
+
 def validate_dataframe(df, required_columns, numeric_columns):
     """Validate the DataFrame and return valid data.
 
@@ -15,6 +24,9 @@ def validate_dataframe(df, required_columns, numeric_columns):
     if not isinstance(df, pd.DataFrame):
         logger.error(f"Expected a DataFrame from a CSV file, got {type(df).__name__}")
         raise ValueError(f"Expected a DataFrame from a CSV file, got {type(df).__name__}")
+
+    required_columns = _as_list(required_columns)
+    numeric_columns = _as_list(numeric_columns)
 
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
@@ -45,7 +57,11 @@ def validate_dataframe(df, required_columns, numeric_columns):
             )
 
         # convert to a numeric data type
-        df[col] = pd.to_numeric(df[col])
+        try:
+            df[col] = pd.to_numeric(df[col])
+        except ValueError as error:
+            logger.error(f"Could not convert {col} to numbers: {error}")
+            raise ValueError(f"Could not convert {col} to numbers: {error}") from error
 
     rows_after = len(df)
     logger.debug(

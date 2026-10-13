@@ -15,7 +15,12 @@ def load_csv(filepath):
     """Load a CSV file into a DataFrame.
     filepath is a Path object.
     """
-    df = pd.read_csv(filepath)
+    try:
+        df = pd.read_csv(filepath)
+    except (pd.errors.EmptyDataError, pd.errors.ParserError, UnicodeDecodeError) as error:
+        logger.error(f"Could not read CSV file {filepath}: {error}")
+        raise ValueError(f"Could not read CSV file {filepath}: {error}") from error
+
     logger.info(f"Loaded CSV file: {filepath} ({len(df)} rows)")
     return df
 
@@ -24,8 +29,13 @@ def load_json(filepath):
     """Load a JSON file into a Python object (dict or list).
     filepath is a Path object.
     """
-    with open(filepath) as file:
-        data = json.load(file)
+    try:
+        with open(filepath, encoding="utf-8-sig") as file:
+            data = json.load(file)
+    except (json.JSONDecodeError, UnicodeDecodeError) as error:
+        logger.error(f"Could not read JSON file {filepath}: {error}")
+        raise ValueError(f"Could not read JSON file {filepath}: {error}") from error
+
     logger.info(f"Loaded JSON file: {filepath}")
     return data
 
@@ -34,8 +44,13 @@ def load_yaml(filepath):
     """Load a YAML file into a Python object.
     filepath is a Path object.
     """
-    with open(filepath) as file:
-        data = yaml.safe_load(file)
+    try:
+        with open(filepath, encoding="utf-8-sig") as file:
+            data = yaml.safe_load(file)
+    except (yaml.YAMLError, UnicodeDecodeError) as error:
+        logger.error(f"Could not read YAML file {filepath}: {error}")
+        raise ValueError(f"Could not read YAML file {filepath}: {error}") from error
+
     logger.info(f"Loaded YAML file: {filepath}")
     return data
 
