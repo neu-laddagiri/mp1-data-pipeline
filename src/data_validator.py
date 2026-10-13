@@ -12,6 +12,10 @@ def validate_dataframe(df, required_columns, numeric_columns):
     required_columns: a list of column names that must exist.
     numeric_columns: a list of column names whose values should be numeric.
     """
+    if not isinstance(df, pd.DataFrame):
+        logger.error(f"Expected a DataFrame from a CSV file, got {type(df).__name__}")
+        raise ValueError(f"Expected a DataFrame from a CSV file, got {type(df).__name__}")
+
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         logger.error(f"Missing required columns: {missing_columns}")
